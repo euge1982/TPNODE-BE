@@ -23,11 +23,11 @@ const User = sequelize.define('User', {
   contraseña: {
     type: DataTypes.STRING,
     allowNull: false,
-  },
+  }/*,
   rol: {
     type: DataTypes.ENUM('super', 'admin', 'usuario'),   //Seleccion de roles
     defaultValue: 'usuario',   //Rol por defecto es usuario (que es el usuario comun)
-  }
+  }*/
 });
 
 module.exports = User;   //Exporto el modelo

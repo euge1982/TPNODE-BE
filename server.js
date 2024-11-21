@@ -10,7 +10,10 @@ require('dotenv').config();   //Importa dotenv para usar variables de entorno
 
 //Se configura el servidor
 const app = express();   //Crea el servidor
-app.use(cors());   //Permite peticiones CORS
+app.use(cors({
+  origin: 'http://localhost:3001',   //Permite peticiones desde http://localhost:3001
+  credentials: true,
+}));   //Permite peticiones CORS
 app.use(express.json());   //Permite peticiones JSON
 app.use('/api/users', userRoutes);   //Usa las rutas del controlador de User
 app.use('/api/payments', paymentRoutes);    //Usa las rutas del controlador de Pago

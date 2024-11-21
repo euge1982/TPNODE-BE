@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');   //Importo jwt
 require('dotenv').config();   //Importo dotenv para usar variables de entorno
 
 //Funcion para validar el token
-const authMiddleware = (roles = []) => {   //Si no se especifica roles, se permiten todos
+const authMiddleware = () => {   
   //Funcion de interna
   return (req, res, next) => {
     //Obtiene el token del headers
@@ -24,12 +24,7 @@ const authMiddleware = (roles = []) => {   //Si no se especifica roles, se permi
       //Si hay un error, retornar error 403 (Forbidden) y corta la ejecucion
       if (err) return res.status(403).json({ message: 'Token inválido' });
 
-      //Si hay un error, retornar error 401 (Unauthorized) y corta la ejecucion
-      if (roles.length && !roles.includes(user.rol)) {
-        return res.status(401).json({ message: 'No autorizado' });
-      }
-
-      req.user = user;   //Guarda el usuario en la peticion
+      req.user = user;   //Guarda el usuario decodificado en la peticion
       next();   //Continua la ejecucion con lo que sigue
     });
   };

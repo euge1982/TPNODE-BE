@@ -18,7 +18,7 @@ exports.createPayment = async (req, res) => {
       formaPago,
       descripcion,
       ubicacion,
-      userId,   //Usuario al que se le registra el pago
+      userId: req.user.id,   //Usuario al que se le registra el pago
     });
 
     //Retornar el nuevo pago creado y status 201 (Creado)
@@ -30,46 +30,46 @@ exports.createPayment = async (req, res) => {
   }
 };
 
-//Obtener los pagos del usuario logueado o de un usuario especifico (si es admin o super)
+//Obtener los pagos del usuario logueado
 exports.getPayments = async (req, res) => {
   try {
-    const { userId } = req.query;   //Obtener el userId de los parametros de la URL
+    //const { userId } = req.query;   //Obtener el userId de los parametros de la URL
 
     //Si es un usuario comun, solo puede obtener sus propios pagos
-    if (req.user.rol === 'usuario') {
-      //Obtiene sus pagos activos
+     //Obtiene sus pagos activos
       const payments = await Payment.findAll({
         where: { userId: req.user.id, activo: true },   //Solo los pagos activos del usuario logueado
       });
       //Retorna los pagos y status 200 (OK)
       return res.status(200).json(payments);
     }
-
-    //Si es admin o super, puede obtener los pagos de un usuario especifico (si se ingresa el userId)
-    const payments = await Payment.findAll({
-      where: { userId: userId || req.user.id, activo: true },   //Si no hay userId, devuelve los pagos del admin/super
-    });
-    //Retorna los pagos y status 200 (OK)
-    res.status(200).json(payments);
-  } 
-  catch (error) {
+   catch (error) {
     //Si ocurre un error, retorna error 500 (Internal Server Error)
     res.status(500).json({ message: 'Error al obtener los pagos', error: error.message });
   }
 };
 
-//Actualizar un pago (solo para admin o super)
+// Obtener los pagos desactivados del usuario logueado
+exports.getDeletedPayments = async (req, res) => {
+  try {
+    const deletedPayments = await DeletedPayment.findAll({
+      where: { userId: req.user.id },
+      include: { model: Payment, where: { userId: req.user.id }, paranoid: false },
+    });
+    res.status(200).json(deletedPayments);
+  } catch (error) {
+    res.status(500).json({ message: 'Error al obtener los pagos desactivados', error: error.message });
+  }
+};
+
+//Actualizar un pago
 exports.updatePayment = async (req, res) => {
+  try {
   const { id } = req.params;
   const { fechaPago, monto, formaPago, descripcion, ubicacion } = req.body;
 
-  //Verificar si el usuario es admin o super
-  if (req.user.rol !== 'admin' && req.user.rol !== 'super') {
-    return res.status(403).json({ message: 'No autorizado para actualizar pagos' });
-  }
-
-  try {
-    const payment = await Payment.findByPk(id);
+  const payment = await Payment.findOne({ where: { id, activo: true } });
+  
 
     if (!payment) {
       return res.status(404).json({ message: 'Pago no encontrado' });
@@ -95,15 +95,14 @@ exports.updatePayment = async (req, res) => {
   }
 };
 
-//Desactivar un pago (solo para admin o super)
+//Desactivar un pago
 exports.deletePayment = async (req, res) => {
+  try {
   const { id } = req.params;   //Obtener el id del pago a desactivar
 
-  //No es necesario verificar si el usuario es admin o super ya que lo hace el middleware de autenticacion
 
-  try {
-    //Buscar el pago por su id
-    const payment = await Payment.findByPk(id);
+     //Buscar el pago por su id
+    const payment = await Payment.findOne({ where: { id, activo: true } });
 
     //Verificar que el pago exista
     if (!payment) {
@@ -120,7 +119,7 @@ exports.deletePayment = async (req, res) => {
     //Crear un registro en la tabla DeletedPayment
     await DeletedPayment.create({
       paymentId: payment.id,   //El id del pago
-      eliminadoPor: req.user.id,    //El usuario que realizo la eliminacion
+      userId: req.user.id,    //El usuario que realizo la eliminacion
       FechaEliminado: new Date()   //Fecha de la eliminacion
     });
 
@@ -136,5 +135,35 @@ exports.deletePayment = async (req, res) => {
   catch (error) {
     //Si ocurre un error, retornar error 500 (Internal Server Error)
     res.status(500).json({ message: 'Error al desactivar el pago', error: error.message });
+  }
+};
+
+// Obtener pagos eliminados
+exports.getDeletedPayments = async (req, res) => {
+  try {
+    const deletedPayments = await Payment.findAll({
+      where: { userId: req.user.id, activo: false },
+    });
+
+    res.status(200).json(deletedPayments);
+  } 
+  catch (error) {
+    res.status(500).json({ message: 'Error al obtener los pagos eliminados', error: error.message });
+  }
+};
+
+// Restaurar un pago
+exports.restorePayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const payment = await Payment.findOne({ where: { id, userId: req.user.id, activo: false } });
+    if (!payment) return res.status(404).json({ message: 'Pago no encontrado' });
+
+    await Payment.update({ activo: true }, { where: { id } });
+
+    res.status(200).json({ message: 'Pago restaurado correctamente' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error al restaurar el pago', error: error.message });
   }
 };

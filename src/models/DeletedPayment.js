@@ -21,7 +21,7 @@ const DeletedPayment = sequelize.define('DeletedPayment', {
     },
     onDelete: 'CASCADE'   //Si un pago se elimina de la tabla Payment, se eliminara de esta tabla tambien
   },
-  eliminadoPor: {
+  userId: {
     type: DataTypes.INTEGER,
     allowNull: false,   //Quien lo elimino (id del usuario)
     references: {
@@ -34,7 +34,10 @@ const DeletedPayment = sequelize.define('DeletedPayment', {
     defaultValue: DataTypes.NOW
   }
 }, {
-  timestamps: false
+  timestamps: false,
+  tableName: 'DeletedPayment'
 });
+
+DeletedPayment.belongsTo(Payment, { foreignKey: 'paymentId', onDelete: 'CASCADE' });   //Se establece la relacion con el modelo de Payment
 
 module.exports = DeletedPayment;  //Exporto el modelo

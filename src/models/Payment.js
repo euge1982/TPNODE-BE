@@ -33,7 +33,7 @@ const Payment = sequelize.define('Payment', {
   },
   ubicacion: {
     type: DataTypes.STRING,
-    allowNull: false,
+    allowNull: true,
   },
   activo: {
     type: DataTypes.BOOLEAN,

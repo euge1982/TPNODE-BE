@@ -6,9 +6,11 @@ const paymentController = require('../controllers/paymentController');   //Impor
 const authMiddleware = require('../middlewares/authMiddleware');   //Importo el middleware de autenticacion
 
 //Rutas
-router.post('/', authMiddleware(['admin', 'super']), paymentController.createPayment);   //Crea un nuevo pago
-router.get('/', authMiddleware(['admin', 'super', 'usuario']), paymentController.getPayments);   //Obtiene todos los pagos de un usuario
-router.put('/:id', authMiddleware(['admin', 'super']), paymentController.updatePayment);   //Actualiza un pago
-router.delete('/:id', authMiddleware(['admin', 'super']), paymentController.deletePayment);   //"Elimina" un pago, solo lo desactiva
+router.post('/', authMiddleware(), paymentController.createPayment);   //Crea un nuevo pago
+router.get('/', authMiddleware(), paymentController.getPayments);   //Obtiene todos los pagos de un usuario
+router.patch('/:id', authMiddleware(), paymentController.updatePayment);   //Actualiza un pago
+router.delete('/:id', authMiddleware(), paymentController.deletePayment);   //"Elimina" un pago, solo lo desactiva
+router.get('payment/deleted', authMiddleware(), paymentController.getDeletedPayments);   //Obtiene los pagos eliminados de un usuario
+router.patch('payment/restore/:id', authMiddleware(), paymentController.restorePayment);   //Restaura un pago eliminado
 
 module.exports = router;   //Exporta el enrutador

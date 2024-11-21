@@ -7,8 +7,9 @@ const bcrypt = require('bcrypt');   //Importo bcrypt
 
 //Funcion para registrar un nuevo usuario
 exports.register = async (req, res) => {
+  try {
   //Tomo el nombre, el correo, la contraseña y el rol del body de la peticion
-  const { nombre, correo, contraseña, rol } = req.body;
+  const { nombre, correo, contraseña } = req.body;
 
   //Verificar si el correo ya existe
   const user = await User.findOne({ where: { correo } });
@@ -25,15 +26,20 @@ exports.register = async (req, res) => {
     nombre,
     correo,
     contraseña: hashedPassword,
-    rol,
+    //rol,
   });
 
   //Se retorna el usuario creado y el status 201 (Creado)
   res.status(201).json(newUser);
+  } catch (error) {
+    //Si ocurre un error, se retorna error 500 (Internal Server Error)
+    res.status(500).json({ message: 'Error al registrar el usuario', error: error.message });
+  }
 };
 
 //Funcion para iniciar sesion
 exports.login = async (req, res) => {
+  try {
   //Tomo el correo y la contraseña del body de la peticion
   const { correo, contraseña } = req.body;
 
@@ -45,11 +51,17 @@ exports.login = async (req, res) => {
   }
 
   //Generar el token si el usuario y la contraseña son correctas
-  const token = jwt.sign({ id: user.id, rol: user.rol }, process.env.JWT_SECRET);
+  const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET,
+    { expiresIn: '1h' }
+  );
   
   //Registrar el login en la base de datos (Tabla Login)
   await Login.create({ userId: user.id });
 
   //Retornar el token y un status 200 (OK)
   res.status(200).json({ token });
+  } catch (error) {
+    //Si ocurre un error, se retorna error 500 (Internal Server Error)
+    res.status(500).json({ message: 'Error al iniciar sesión', error: error.message });
+  }
 };
